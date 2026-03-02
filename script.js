@@ -13,7 +13,7 @@ const verificationContainer = document.getElementById('verification-container');
 const approveBtn = document.getElementById('approve-btn');
 
 // Using two distinct webhooks for the two phases
-const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/police-intake';
+const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/police-intake-final';
 const WEBHOOK_EXECUTE = 'https://augmentloop.app.n8n.cloud/webhook/police-verify';
 
 let selectedFile = null;
