@@ -1,0 +1,190 @@
+{
+  "name": "HITL Richards & Law Automation (Phase 1 & 2)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "extract-pdf",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-extract",
+      "name": "Phase 1: Webhook (Extract)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"model\": \"claude-3-5-sonnet-20241022\", \"max_tokens\": 4000, \"system\": \"You are an expert Legal Case Extraction Assistant. Extract structured data from the provided New York State police report (MV-104A) into a JSON object.\\n\\nINSTRUCTIONS:\\n1. Identify the CLIENT (injured party) and OPPOSING PARTY.\\n2. Accident date MUST be YYYY-MM-DD.\\n3. SOL date is EXACTLY 8 years after accident date.\\n4. If client is pedestrian, vehicle_info must be null.\\n\\nSCHEMA:\\n{\\n  \\\"client_first_name\\\": \\\"string\\\",\\n  \\\"client_last_name\\\": \\\"string\\\",\\n  \\\"client_gender\\\": \\\"male|female|others|unknown\\\",\\n  \\\"accident_date\\\": \\\"YYYY-MM-DD\\\",\\n  \\\"accident_time\\\": \\\"string or null\\\",\\n  \\\"accident_location\\\": \\\"string\\\",\\n  \\\"accident_description\\\": \\\"string\\\",\\n  \\\"opposing_party_name\\\": \\\"string\\\",\\n  \\\"injuries_sustained\\\": \\\"string\\\",\\n  \\\"number_injured\\\": \\\"integer\\\",\\n  \\\"vehicle_info\\\": \\\"string or null\\\",\\n  \\\"vehicle_registration_plate\\\": \\\"string or null\\\",\\n  \\\"accident_type\\\": \\\"string\\\",\\n  \\\"statute_of_limitations_date\\\": \\\"YYYY-MM-DD\\\"\\n}\\n\\nReturn ONLY the raw JSON object. Do not use markdown blocks.\", \"messages\": [ { \"role\": \"user\", \"content\": [ { \"type\": \"document\", \"source\": { \"type\": \"base64\", \"media_type\": \"application/pdf\", \"data\": \"{{ $binary.data.data }}\" } }, { \"type\": \"text\", \"text\": \"Extract the case details from this police report.\" } ] } ] }",
+        "options": {}
+      },
+      "id": "anthropic-extract",
+      "name": "Extract Data (Anthropic)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const rawResponse = $input.item.json.content[0].text;\n  const extractedData = JSON.parse(rawResponse);\n  return { json: extractedData };\n} catch (e) {\n  throw new Error('Failed to parse AI response: ' + e.message);\n}"
+      },
+      "id": "parse-json",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 0]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Vercel",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [750, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "execute-automation",
+        "options": {}
+      },
+      "id": "webhook-execute",
+      "name": "Phase 2: Webhook (Execute)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 250]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.body;\nconst month = new Date().getMonth() + 1;\nconst bookingType = (month >= 3 && month <= 8) ? \"Office\" : \"Virtual\";\nconst bookingLink = (bookingType === \"Office\") \n  ? \"https://calendly.com/swans-santiago-p/summer-spring\" \n  : \"https://calendly.com/swans-santiago-p/winter-autumn\";\n  \ndata.bookingType = bookingType;\ndata.bookingLink = bookingLink;\nreturn { json: data };"
+      },
+      "id": "seasonal-logic",
+      "name": "Seasonal Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [250, 250]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://app.clio.com/api/v4/matters/{{ $json.matterId }}.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"data\": { \"custom_field_values\": [ {\"custom_field_id\": 17829796, \"value\": \"{{ $json.accident_date }}\"}, {\"custom_field_id\": 17829811, \"value\": \"{{ $json.accident_location }}\"}, {\"custom_field_id\": 17829826, \"value\": \"{{ $json.accident_description }}\"}, {\"custom_field_id\": 17829841, \"value\": \"{{ $json.opposing_party_name }}\"}, {\"custom_field_id\": 17829856, \"value\": \"{{ $json.injuries_sustained }}\"}, {\"custom_field_id\": 17829871, \"value\": \"{{ $json.accident_type }}\"}, {\"custom_field_id\": 17829886, \"value\": \"{{ $json.statute_of_limitations_date }}\"}, {\"custom_field_id\": 17829901, \"value\": \"{{ $json.vehicle_registration_plate }}\"}, {\"custom_field_id\": 17829916, \"value\": \"{{ $json.number_injured }}\"} ] } }",
+        "options": {}
+      },
+      "id": "clio-patch",
+      "name": "Update Clio Matter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 250]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.clio.com/api/v4/calendar_entries.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"data\": { \"matter\": {\"id\": {{ $json.matterId }} }, \"name\": \"SOL Deadline - 8 Year Statute of Limitations\", \"date\": \"{{ $json.statute_of_limitations_date }}\", \"all_day\": true, \"description\": \"Statute of Limitations deadline for case. File before this date.\" } }",
+        "options": {}
+      },
+      "id": "clio-calendar",
+      "name": "Create Calendar Entry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 250]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.clio.com/api/v4/document_automations.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"data\": { \"document_template\": {\"id\": 999999 }, \"matter\": {\"id\": {{ $json.matterId }} } } }",
+        "options": {}
+      },
+      "id": "clio-doc-automation",
+      "name": "Generate Retainer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 250]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "sendTo": "={{ $json.clientEmail }}",
+        "subject": "Richards & Law: Your Case Setup & Retainer",
+        "message": "=<p>Dear {{ $json.client_first_name }} {{ $json.client_last_name }},</p>\\n\\n<p>Thank you for submitting your police report. We have reviewed the details regarding your accident on {{ $json.accident_date }}. Specifically: <em>{{ $json.accident_description }}</em></p>\\n\\n<p>Your Retainer Agreement has been generated in our system via Clio Document Automation.</p>\\n\\n<p><strong>Next Step: Schedule Your Consultation</strong></p>\\n<p>Based on the current season, we are conducting <strong>{{ $json.bookingType }}</strong> consultations. Please book your appointment using the link below:</p>\\n<p><a href=\\\"{{ $json.bookingLink }}\\\">{{ $json.bookingLink }}</a></p>\\n\\n<p>We look forward to speaking with you soon.</p>\\n\\n<p>Best regards,<br>\\n<strong>Andrew Richards</strong><br>Richards & Law</p>",
+        "options": {
+          "appendAtta": false
+        }
+      },
+      "id": "gmail-send",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1050, 250]
+    }
+  ],
+  "connections": {
+    "Phase 1: Webhook (Extract)": {
+      "main": [ [ { "node": "Extract Data (Anthropic)", "type": "main", "index": 0 } ] ]
+    },
+    "Extract Data (Anthropic)": {
+      "main": [ [ { "node": "Parse JSON", "type": "main", "index": 0 } ] ]
+    },
+    "Parse JSON": {
+      "main": [ [ { "node": "Respond to Vercel", "type": "main", "index": 0 } ] ]
+    },
+    "Phase 2: Webhook (Execute)": {
+      "main": [ [ { "node": "Seasonal Logic", "type": "main", "index": 0 } ] ]
+    },
+    "Seasonal Logic": {
+      "main": [ [ { "node": "Update Clio Matter", "type": "main", "index": 0 } ] ]
+    },
+    "Update Clio Matter": {
+      "main": [ [ { "node": "Create Calendar Entry", "type": "main", "index": 0 } ] ]
+    },
+    "Create Calendar Entry": {
+      "main": [ [ { "node": "Generate Retainer", "type": "main", "index": 0 } ] ]
+    },
+    "Generate Retainer": {
+      "main": [ [ { "node": "Send Email", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

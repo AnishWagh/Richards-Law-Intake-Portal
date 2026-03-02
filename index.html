@@ -6,6 +6,16 @@
     <title>Richards & Law | Intake Portal</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; }
+        .full-width { grid-column: 1 / -1; }
+        #verification-container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 800px; margin: 0 auto; }
+        .verify-field { display: flex; flex-direction: column; margin-bottom: 10px; }
+        .verify-field label { font-size: 0.85rem; color: #555; margin-bottom: 5px; font-weight: 600; }
+        .verify-field input, .verify-field select, .verify-field textarea { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+        .btn-approve { background-color: #2e7d32; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: bold; width: 100%; margin-top: 20px; }
+        .btn-approve:hover { background-color: #1b5e20; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -15,50 +25,74 @@
         </header>
 
         <main>
+            <!-- STEP 1: UPLOAD -->
             <div class="upload-card" id="drop-zone">
                 <div class="form-group">
                     <label for="matter-id">Clio Matter ID</label>
                     <input type="text" id="matter-id" placeholder="e.g. 1769228281" value="1769228281">
                 </div>
-                
                 <div class="form-group">
                     <label for="client-email">Client Email Address</label>
                     <input type="email" id="client-email" placeholder="client@example.com" value="talent.legal-engineer.hackathon.automation-email@swans.co">
                 </div>
-
                 <div class="upload-section">
                     <div class="icon">📄</div>
                     <h2>Upload Police Report</h2>
-                    <p>Select the MV-104A PDF for this matter.</p>
-                    
+                    <p>Select the MV-104A PDF for AI Extraction.</p>
                     <input type="file" id="file-input" accept=".pdf" style="display:none;">
-                    <label for="file-input" class="btn-primary" id="browse-label" style="cursor:pointer; display:inline-block;">
-                        Select PDF Report
-                    </label>
+                    <label for="file-input" class="btn-primary" id="browse-label" style="cursor:pointer; display:inline-block;">Select PDF Report</label>
                 </div>
-                
                 <div id="file-info" class="hidden">
                     <p class="file-name" style="margin-top: 20px; font-weight: bold; color: #1a2b48;"></p>
-                    <button class="btn-submit" id="submit-btn">Run AI Automation</button>
+                    <button class="btn-submit" id="extract-btn">Extract Data</button>
                 </div>
             </div>
 
+            <!-- LOADING STATE -->
             <div id="status-container" class="hidden">
                 <div class="spinner"></div>
-                <p id="status-text">AI Agent is extracting data and updating Clio...</p>
+                <p id="status-text">AI Agent is reading the PDF...</p>
             </div>
 
+            <!-- STEP 2: HUMAN-IN-THE-LOOP VERIFICATION -->
+            <div id="verification-container" class="hidden">
+                <h2>Human Verification Required</h2>
+                <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">Review the AI-extracted data below. Make any necessary corrections before sending to Clio.</p>
+                
+                <div class="form-grid">
+                    <div class="verify-field"><label>First Name</label><input type="text" id="v-first-name"></div>
+                    <div class="verify-field"><label>Last Name</label><input type="text" id="v-last-name"></div>
+                    <div class="verify-field"><label>Gender</label>
+                        <select id="v-gender">
+                            <option value="male">Male</option><option value="female">Female</option><option value="others">Others</option><option value="unknown">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="verify-field"><label>Opposing Party</label><input type="text" id="v-opposing-party"></div>
+                    <div class="verify-field"><label>Accident Date</label><input type="date" id="v-accident-date"></div>
+                    <div class="verify-field"><label>Accident Time</label><input type="time" id="v-accident-time"></div>
+                    <div class="verify-field"><label>Accident Type</label><input type="text" id="v-accident-type"></div>
+                    <div class="verify-field"><label>Number Injured</label><input type="number" id="v-number-injured"></div>
+                    <div class="verify-field full-width"><label>Accident Location</label><input type="text" id="v-location"></div>
+                    <div class="verify-field full-width"><label>Injuries Sustained</label><input type="text" id="v-injuries"></div>
+                    <div class="verify-field"><label>Vehicle Info</label><input type="text" id="v-vehicle-info"></div>
+                    <div class="verify-field"><label>License Plate</label><input type="text" id="v-plate"></div>
+                    <div class="verify-field full-width"><label>Officer Narrative</label><textarea id="v-description" rows="3"></textarea></div>
+                    <div class="verify-field full-width"><label>Calculated SOL Date</label><input type="date" id="v-sol-date" readonly style="background:#eee;"></div>
+                </div>
+
+                <button class="btn-approve" id="approve-btn">Approve & Execute Automation</button>
+            </div>
+
+            <!-- SUCCESS STATE -->
             <div id="success-container" class="hidden">
                 <div class="success-icon" style="font-size: 4rem; color: #4CAF50; margin-bottom: 1.5rem;">✓</div>
-                <h2>Automation Successful</h2>
-                <p>The case data has been extracted. Clio Matter has been updated, the SOL is calendared, and the welcome email has been sent.</p>
-                <button class="btn-secondary" onclick="location.reload()">Process Next Case</button>
+                <h2>Automation Complete</h2>
+                <p>The verified data has been pushed to Clio. The Retainer Agreement was generated and emailed to the client.</p>
+                <button class="btn-secondary" onclick="location.reload()" style="margin-top: 20px;">Process Next Case</button>
             </div>
         </main>
 
-        <footer>
-            <p>&copy; 2026 Richards & Law. Powered by Swans AI.</p>
-        </footer>
+        <footer><p>&copy; 2026 Richards & Law. Powered by Swans AI.</p></footer>
     </div>
     <script src="script.js"></script>
 </body>
