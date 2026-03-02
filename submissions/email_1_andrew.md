@@ -1,19 +1,25 @@
-Subject: Production Ready: Your "Speed-to-Lead" Automation System
+Subject: Automating police reports & retainers - Complete!
 
-Hi Andrew,
+Good morning Andrew,
 
-I’m pleased to deliver the automated police report intake system for Richards & Law. 
+Thank you for trusting Swans with this critical workflow. I understand completely—in personal injury, speed-to-lead is everything. Waiting on manual data entry from messy police reports is a bottleneck you simply cannot afford if you want to secure those high-value retainers.
 
-As we discussed, your team was losing high-value leads due to the manual data entry bottleneck. This new system eliminates that friction. By the time a paralegal would have even opened a PDF, this automation has already:
+I'm pleased to tell you that we have completely eliminated this bottleneck. 
 
-1.  **Extracted Case Intelligence:** Claude 3.5 Sonnet parses the messy scanned reports with high accuracy—including identifying if the client was a pedestrian or driver to keep your data clean.
-2.  **Updated Clio Instantly:** Your Matter and Contact records are pre-populated with accident dates, locations, and descriptions.
-3.  **Generated the Retainer:** Using your official template, the system produces a personalized agreement including your conditional clauses for injury vs. non-injury cases.
-4.  **Onboarded the Client:** The client receives a warm, personalized email with their retainer attached and a link to book a consultation—automatically switching between your in-office and virtual links based on the current season.
+I have built and deployed a custom AI Intake Automation system tailored specifically for Richards & Law. Here is what it does:
 
-This system ensures Richards & Law is always the first firm to reach the client, giving you a decisive competitive advantage in New York’s personal injury market.
+1. **The Intake Portal:** I built a simple, secure portal where your team can instantly upload a potential client's MV-104A police report.
+2. **AI Extraction:** The system uses Anthropic's Claude 3.5 Sonnet to automatically "read" the scanned report, accurately extracting the client details, the at-fault party, and the officer's narrative. It even applies your specific logic (e.g., ignoring vehicle details if the client was a pedestrian).
+3. **Clio Automation:** The AI instantly updates the existing Matter in Clio Manage with all the custom fields required for your Retainer Agreement. It also automatically calculates the 8-year Statute of Limitations and places it directly on your calendar.
+4. **Instant Client Outreach:** Finally, it dispatches a warm, personalized email to the client, summarizing their case and providing the correct scheduling link (automatically switching between virtual and in-office links based on the season).
 
-I look forward to meeting with you next Friday morning to review the performance data and discuss scaling this across your other practice areas.
+What used to take your paralegals 30 minutes of frustrating data entry now takes exactly 5 seconds. You will be the first firm to respond, every time.
+
+I have attached a short Loom video below walking you through the system and demonstrating it live with the Guillermo Reyes case file. 
+
+**[Insert Loom Video Link Here]**
+
+I would love to meet next Friday morning to review your feedback and discuss the rollout to your team. Does 10:00 AM EST work for you?
 
 Best regards,
 
