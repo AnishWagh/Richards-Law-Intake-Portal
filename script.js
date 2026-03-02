@@ -12,9 +12,9 @@ const uploadCard = document.querySelector('.upload-card');
 const verificationContainer = document.getElementById('verification-container');
 const approveBtn = document.getElementById('approve-btn');
 
-// Using two distinct webhooks for the two phases
-const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/police-intake-final';
-const WEBHOOK_EXECUTE = 'https://augmentloop.app.n8n.cloud/webhook/police-verify';
+// Using unique webhook paths to avoid conflicts
+const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/swans-police-intake-v1';
+const WEBHOOK_EXECUTE = 'https://augmentloop.app.n8n.cloud/webhook/swans-police-verify-v1';
 
 let selectedFile = null;
 
@@ -51,7 +51,7 @@ extractBtn.addEventListener('click', async () => {
     formData.append('police_report', selectedFile);
     formData.append('matter_id', matterId);
     formData.append('client_email', clientEmail);
-    formData.append('client_name', 'Extracted from PDF'); // Placeholder, name will be extracted
+    formData.append('client_name', 'Extracted from PDF'); 
 
     try {
         const response = await fetch(WEBHOOK_EXTRACT, {
@@ -65,7 +65,7 @@ extractBtn.addEventListener('click', async () => {
             statusContainer.classList.add('hidden');
             verificationContainer.classList.remove('hidden');
         } else {
-            throw new Error(`Server responded with ${response.status}. Ensure Intake webhook is ACTIVE.`);
+            throw new Error(`Server responded with ${response.status}. Ensure Intake webhook is ACTIVE and CORS is enabled.`);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -78,7 +78,7 @@ extractBtn.addEventListener('click', async () => {
 function populateVerificationForm(data) {
     // Mapping from n8n extracted fields to UI
     document.getElementById('v-last-name').value = data.client_name || '';
-    document.getElementById('v-first-name').value = ''; // Extraction provides LAST, FIRST usually
+    document.getElementById('v-first-name').value = ''; 
     document.getElementById('v-gender').value = data.client_sex || 'M';
     document.getElementById('v-opposing-party').value = data.defendant_name || '';
     document.getElementById('v-accident-date').value = data.date_of_accident || '';
@@ -89,7 +89,7 @@ function populateVerificationForm(data) {
     document.getElementById('v-description').value = data.accident_description || '';
     document.getElementById('v-sol-date').value = data.sol_date || '';
     
-    // Hidden fields or state needed for execution
+    // State needed for execution phase
     window.extractedCaseData = data;
 }
 
@@ -124,7 +124,7 @@ approveBtn.addEventListener('click', async () => {
             statusContainer.classList.add('hidden');
             successContainer.classList.remove('hidden');
         } else {
-            throw new Error(`Server responded with ${response.status}.`);
+            throw new Error(`Server responded with ${response.status}. Ensure Verification webhook is ACTIVE and CORS is enabled.`);
         }
     } catch (error) {
         console.error('Error:', error);
