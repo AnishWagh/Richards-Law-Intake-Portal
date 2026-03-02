@@ -18,12 +18,15 @@
             <div class="upload-card" id="drop-zone">
                 <div class="icon">📄</div>
                 <h2>Upload Police Report</h2>
-                <p>Drag and drop the MV-104A PDF here, or click to browse.</p>
-                <input type="file" id="file-input" accept=".pdf" hidden>
-                <button class="btn-primary" id="browse-btn">Select File</button>
+                <p>Drag and drop the MV-104A PDF here, or click below.</p>
+                
+                <input type="file" id="file-input" accept=".pdf" style="display:none;">
+                <label for="file-input" class="btn-primary" id="browse-label" style="cursor:pointer; display:inline-block;">
+                    Select File
+                </label>
                 
                 <div id="file-info" class="hidden">
-                    <p class="file-name"></p>
+                    <p class="file-name" style="margin-top: 20px; font-weight: bold; color: #1a2b48;"></p>
                     <button class="btn-submit" id="submit-btn">Process Case</button>
                 </div>
             </div>
@@ -34,7 +37,7 @@
             </div>
 
             <div id="success-container" class="hidden">
-                <div class="success-icon">Check</div>
+                <div class="success-icon" style="font-size: 4rem; color: #4CAF50; margin-bottom: 1.5rem;">✓</div>
                 <h2>Intake Complete</h2>
                 <p>The case has been processed. Check <strong>Clio Manage</strong> for the new matter fields and <strong>Gmail</strong> for the client welcome email.</p>
                 <button class="btn-secondary" onclick="location.reload()">Process Another</button>
