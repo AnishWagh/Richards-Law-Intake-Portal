@@ -1,0 +1,147 @@
+{
+  "name": "Phase 2: Legal AI Execution",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "execute-automation",
+        "options": {}
+      },
+      "id": "webhook-execute",
+      "name": "Webhook (Execute)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.body;
+const month = new Date().getMonth() + 1;
+const bookingType = (month >= 3 && month <= 8) ? "Office" : "Virtual";
+const bookingLink = (bookingType === "Office") 
+  ? "https://calendly.com/swans-santiago-p/summer-spring" 
+  : "https://calendly.com/swans-santiago-p/winter-autumn";
+  
+data.bookingType = bookingType;
+data.bookingLink = bookingLink;
+return { json: data };"
+      },
+      "id": "seasonal-logic",
+      "name": "Seasonal Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [250, 0]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://app.clio.com/api/v4/matters/{{ $json.matterId }}.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ "data": { "custom_field_values": [ {"custom_field_id": 17829796, "value": "{{ $json.accident_date }}"}, {"custom_field_id": 17829811, "value": "{{ $json.accident_location }}"}, {"custom_field_id": 17829826, "value": "{{ $json.accident_description }}"}, {"custom_field_id": 17829841, "value": "{{ $json.opposing_party_name }}"}, {"custom_field_id": 17829856, "value": "{{ $json.injuries_sustained }}"}, {"custom_field_id": 17829871, "value": "{{ $json.accident_type }}"}, {"custom_field_id": 17829886, "value": "{{ $json.statute_of_limitations_date }}"}, {"custom_field_id": 17829901, "value": "{{ $json.vehicle_registration_plate }}"}, {"custom_field_id": 17829916, "value": "{{ $json.number_injured }}"} ] } }",
+        "options": {}
+      },
+      "id": "clio-patch",
+      "name": "Update Clio Matter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.clio.com/api/v4/calendar_entries.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ "data": { "matter": {"id": {{ $json.matterId }} }, "name": "SOL Deadline - 8 Year Statute of Limitations", "date": "{{ $json.statute_of_limitations_date }}", "all_day": true, "description": "Statute of Limitations deadline for case. File before this date." } }",
+        "options": {}
+      },
+      "id": "clio-calendar",
+      "name": "Create Calendar Entry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.clio.com/api/v4/document_automations.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ "data": { "document_template": {"id": 999999 }, "matter": {"id": {{ $json.matterId }} } } }",
+        "options": {}
+      },
+      "id": "clio-doc-automation",
+      "name": "Generate Retainer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 0]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "sendTo": "={{ $json.clientEmail }}",
+        "subject": "Richards & Law: Your Case Setup & Retainer",
+        "message": "=<p>Dear {{ $json.client_first_name }} {{ $json.client_last_name }},</p>
+
+<p>Thank you for submitting your police report. We have reviewed the details regarding your accident on {{ $json.accident_date }}. Specifically: <em>{{ $json.accident_description }}</em></p>
+
+<p>Your Retainer Agreement has been generated in our system via Clio Document Automation.</p>
+
+<p><strong>Next Step: Schedule Your Consultation</strong></p>
+<p>Based on the current season, we are conducting <strong>{{ $json.bookingType }}</strong> consultations. Please book your appointment using the link below:</p>
+<p><a href="{{ $json.bookingLink }}">{{ $json.bookingLink }}</a></p>
+
+<p>We look forward to speaking with you soon.</p>
+
+<p>Best regards,<br>
+<strong>Andrew Richards</strong><br>Richards & Law</p>",
+        "options": {
+          "appendAtta": false
+        }
+      },
+      "id": "gmail-send",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1050, 0]
+    }
+  ],
+  "connections": {
+    "Webhook (Execute)": {
+      "main": [ [ { "node": "Seasonal Logic", "type": "main", "index": 0 } ] ]
+    },
+    "Seasonal Logic": {
+      "main": [ [ { "node": "Update Clio Matter", "type": "main", "index": 0 } ] ]
+    },
+    "Update Clio Matter": {
+      "main": [ [ { "node": "Create Calendar Entry", "type": "main", "index": 0 } ] ]
+    },
+    "Create Calendar Entry": {
+      "main": [ [ { "node": "Generate Retainer", "type": "main", "index": 0 } ] ]
+    },
+    "Generate Retainer": {
+      "main": [ [ { "node": "Send Email", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
