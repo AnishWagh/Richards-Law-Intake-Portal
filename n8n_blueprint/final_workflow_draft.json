@@ -1,0 +1,135 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "police-report-upload",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "6b3ca182-3c2e-4b72-870a-7897e201dfed",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20240620",
+        "prompt": "={{ $node["pdf_extraction_prompt.md"].text }}",
+        "options": {
+          "maxTokens": 2000
+        }
+      },
+      "id": "a8b9c0d1-e2f3-4g5h-6i7j-8k9l0m1n2o3p",
+      "name": "Claude Extraction",
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [
+        300,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = JSON.parse($node["Claude Extraction"].json.text);
+const now = new Date();
+const month = now.getMonth() + 1; // 0-indexed
+
+// Seasonal Logic
+let bookingLink = "https://calendly.com/swans-santiago-p/winter-autumn";
+if (month >= 3 && month <= 8) {
+  bookingLink = "https://calendly.com/swans-santiago-p/summer-spring";
+}
+
+return {
+  ...data,
+  booking_link: bookingLink
+};"
+      },
+      "id": "b1c2d3e4-f5g6-7h8i-9j0k-l1m2n3o4p5q6",
+      "name": "Process & Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://app.clio.com/api/v4/matters/1769228281",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.CLIO_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data[custom_field_values][]",
+              "value": "={{ { custom_field_id: 17829796, value: $node["Process & Logic"].json.accident_date } }}"
+            },
+            {
+              "name": "data[custom_field_values][]",
+              "value": "={{ { custom_field_id: 17829811, value: $node["Process & Logic"].json.accident_location } }}"
+            }
+          ]
+        }
+      },
+      "id": "c3d4e5f6-g7h8-9i0j-k1l2-m3n4o5p6q7r8",
+      "name": "Update Clio Matter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        700,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Claude Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Extraction": {
+      "main": [
+        [
+          {
+            "node": "Process & Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Logic": {
+      "main": [
+        [
+          {
+            "node": "Update Clio Matter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

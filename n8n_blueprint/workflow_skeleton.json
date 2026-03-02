@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "police-report-upload",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "id": "6b3ca182-3c2e-4b72-870a-7897e201dfed",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        380,
+        240
+      ],
+      "webhookId": "7897e201-dfed-45f9-9ede-d9f6e3e440ba"
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20240620",
+        "maxTokens": 2000,
+        "prompt": "={{ $node["Webhook"].binary.data }}"
+      },
+      "id": "a8b9c0d1-e2f3-4g5h-6i7j-8k9l0m1n2o3p",
+      "name": "Claude Extraction",
+      "type": "n8n-nodes-base.anthropic",
+      "typeVersion": 1,
+      "position": [
+        600,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Claude Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

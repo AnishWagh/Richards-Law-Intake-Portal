@@ -1,5 +1,15 @@
 {
   "experimental": {
     "enableAgents": true
+  },
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--autoConnect"
+      ]
+    }
   }
 }
