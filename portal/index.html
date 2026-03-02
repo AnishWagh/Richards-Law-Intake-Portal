@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Richards & Law | Intake Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Richards & Law</h1>
+            <p class="subtitle">AI Case Intake & Automation System</p>
+        </header>
+
+        <main>
+            <div class="upload-card" id="drop-zone">
+                <div class="icon">📄</div>
+                <h2>Upload Police Report</h2>
+                <p>Drag and drop the MV-104A PDF here, or click to browse.</p>
+                <input type="file" id="file-input" accept=".pdf" hidden>
+                <button class="btn-primary" id="browse-btn">Select File</button>
+                
+                <div id="file-info" class="hidden">
+                    <p class="file-name"></p>
+                    <button class="btn-submit" id="submit-btn">Process Case</button>
+                </div>
+            </div>
+
+            <div id="status-container" class="hidden">
+                <div class="spinner"></div>
+                <p id="status-text">Analyzing report with AI...</p>
+            </div>
+
+            <div id="success-container" class="hidden">
+                <div class="success-icon">Check</div>
+                <h2>Intake Complete</h2>
+                <p>The case has been processed. Check <strong>Clio Manage</strong> for the new matter fields and <strong>Gmail</strong> for the client welcome email.</p>
+                <button class="btn-secondary" onclick="location.reload()">Process Another</button>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Richards & Law. Powered by Swans AI.</p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
