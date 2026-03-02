@@ -156,9 +156,11 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "police-intake",
+        "path": "swans-police-intake-v1",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "cors": true
+        }
       },
       "id": "bd942f8e-9537-4aac-8c41-c90b34ccd40a",
       "name": "Webhook Trigger",
@@ -168,7 +170,7 @@
         0,
         304
       ],
-      "webhookId": "76e6566c-eda7-48c5-9342-a021ffce8810",
+      "webhookId": "swans-police-intake-v1-webhook",
       "onError": "continueRegularOutput"
     },
     {

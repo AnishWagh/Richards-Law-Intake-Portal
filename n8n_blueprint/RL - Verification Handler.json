@@ -4,8 +4,10 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "police-verify",
-        "options": {}
+        "path": "swans-police-verify-v1",
+        "options": {
+          "cors": true
+        }
       },
       "id": "v1",
       "name": "Verification Webhook",
@@ -15,7 +17,7 @@
         272,
         304
       ],
-      "webhookId": "police-verify-webhook-001"
+      "webhookId": "swans-police-verify-v1-webhook"
     },
     {
       "parameters": {
