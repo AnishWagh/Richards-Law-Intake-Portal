@@ -1,4 +1,6 @@
 const fileInput = document.getElementById('file-input');
+const matterIdInput = document.getElementById('matter-id');
+const clientEmailInput = document.getElementById('client-email');
 const fileInfo = document.getElementById('file-info');
 const fileNameDisplay = document.querySelector('.file-name');
 const submitBtn = document.getElementById('submit-btn');
@@ -11,7 +13,6 @@ const WEBHOOK_URL = 'https://augmentloop.app.n8n.cloud/webhook/police-report-upl
 
 let selectedFile = null;
 
-// File Selection Handler
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
         selectedFile = e.target.files[0];
@@ -21,41 +22,28 @@ fileInput.addEventListener('change', (e) => {
             fileInput.value = '';
             return;
         }
-        fileNameDisplay.textContent = `Selected: ${selectedFile.name}`;
+        fileNameDisplay.textContent = `Attached: ${selectedFile.name}`;
         fileInfo.classList.remove('hidden');
-        browseLabel.classList.add('hidden');
+        browseLabel.textContent = 'Change PDF';
     }
 });
 
-// Drag and Drop
-uploadCard.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadCard.style.borderColor = '#c5a059';
-});
-
-uploadCard.addEventListener('dragleave', () => {
-    uploadCard.style.borderColor = '#d1d9e0';
-});
-
-uploadCard.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadCard.style.borderColor = '#d1d9e0';
-    if (e.dataTransfer.files.length > 0) {
-        fileInput.files = e.dataTransfer.files;
-        // Trigger the change event manually
-        fileInput.dispatchEvent(new Event('change'));
-    }
-});
-
-// Submit to n8n
 submitBtn.addEventListener('click', async () => {
-    if (!selectedFile) return;
+    const matterId = matterIdInput.value.trim();
+    const clientEmail = clientEmailInput.value.trim();
+
+    if (!matterId || !clientEmail || !selectedFile) {
+        alert('Please provide Matter ID, Client Email, and a PDF file.');
+        return;
+    }
 
     uploadCard.classList.add('hidden');
     statusContainer.classList.remove('hidden');
 
     const formData = new FormData();
     formData.append('data', selectedFile);
+    formData.append('matterId', matterId);
+    formData.append('clientEmail', clientEmail);
 
     try {
         const response = await fetch(WEBHOOK_URL, {
@@ -68,11 +56,11 @@ submitBtn.addEventListener('click', async () => {
             successContainer.classList.remove('hidden');
         } else {
             const errorText = await response.text();
-            throw new Error(`Server responded with ${response.status}: ${errorText}`);
+            throw new Error(`Server responded with ${response.status}. Ensure n8n workflow is ACTIVE.`);
         }
     } catch (error) {
         console.error('Error:', error);
-        alert(`Automation Error: ${error.message}\n\nPlease ensure the n8n workflow is ACTIVE.`);
+        alert(`Automation Error: ${error.message}`);
         uploadCard.classList.remove('hidden');
         statusContainer.classList.add('hidden');
     }
