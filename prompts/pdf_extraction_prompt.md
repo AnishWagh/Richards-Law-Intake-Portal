@@ -6,8 +6,11 @@ IMPORTANT RULES:
 2. This is a scanned document. OCR artifacts are common. Use context to 
    interpret unclear text.
 3. The CLIENT is the INJURED PARTY — typically the pedestrian, cyclist, 
-   or the vehicle occupant who was struck/injured.
-4. The OPPOSING PARTY is typically the driver who caused the incident.
+   or the vehicle occupant who was struck/injured. 
+   In NYC reports (MV-104A), look for the "PERSON INJURED" or "PEDESTRIAN" sections. 
+   The client is almost never "Driver 1" if they were hit by a car while walking.
+4. The OPPOSING PARTY is typically the driver who caused the incident (often Driver 1).
+   If the report says "Vehicle 1 struck Pedestrian", the Pedestrian is the CLIENT.
 5. For the accident_description field, use the Officer's Notes section 
    verbatim (bottom of the form). This is the most reliable narrative.
 6. Calculate statute_of_limitations_date as exactly 8 years after 

@@ -13,8 +13,8 @@ const verificationContainer = document.getElementById('verification-container');
 const approveBtn = document.getElementById('approve-btn');
 
 // Using two distinct webhooks for the two phases
-const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/extract-pdf';
-const WEBHOOK_EXECUTE = 'https://augmentloop.app.n8n.cloud/webhook/execute-automation';
+const WEBHOOK_EXTRACT = 'https://augmentloop.app.n8n.cloud/webhook/police-intake';
+const WEBHOOK_EXECUTE = 'https://augmentloop.app.n8n.cloud/webhook/police-verify';
 
 let selectedFile = null;
 
@@ -48,7 +48,10 @@ extractBtn.addEventListener('click', async () => {
     statusText.textContent = "AI Agent is reading the PDF (Phase 1)...";
 
     const formData = new FormData();
-    formData.append('data', selectedFile);
+    formData.append('police_report', selectedFile);
+    formData.append('matter_id', matterId);
+    formData.append('client_email', clientEmail);
+    formData.append('client_name', 'Extracted from PDF'); // Placeholder, name will be extracted
 
     try {
         const response = await fetch(WEBHOOK_EXTRACT, {
@@ -62,7 +65,7 @@ extractBtn.addEventListener('click', async () => {
             statusContainer.classList.add('hidden');
             verificationContainer.classList.remove('hidden');
         } else {
-            throw new Error(`Server responded with ${response.status}. Ensure Extraction webhook is ACTIVE.`);
+            throw new Error(`Server responded with ${response.status}. Ensure Intake webhook is ACTIVE.`);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -73,20 +76,21 @@ extractBtn.addEventListener('click', async () => {
 });
 
 function populateVerificationForm(data) {
-    document.getElementById('v-first-name').value = data.client_first_name || '';
-    document.getElementById('v-last-name').value = data.client_last_name || '';
-    document.getElementById('v-gender').value = data.client_gender || 'unknown';
-    document.getElementById('v-opposing-party').value = data.opposing_party_name || '';
-    document.getElementById('v-accident-date').value = data.accident_date || '';
-    document.getElementById('v-accident-time').value = data.accident_time || '';
-    document.getElementById('v-accident-type').value = data.accident_type || '';
-    document.getElementById('v-number-injured').value = data.number_injured || 0;
+    // Mapping from n8n extracted fields to UI
+    document.getElementById('v-last-name').value = data.client_name || '';
+    document.getElementById('v-first-name').value = ''; // Extraction provides LAST, FIRST usually
+    document.getElementById('v-gender').value = data.client_sex || 'M';
+    document.getElementById('v-opposing-party').value = data.defendant_name || '';
+    document.getElementById('v-accident-date').value = data.date_of_accident || '';
+    document.getElementById('v-accident-type').value = 'Motor Vehicle Accident';
+    document.getElementById('v-number-injured').value = data.number_of_injured || 0;
     document.getElementById('v-location').value = data.accident_location || '';
-    document.getElementById('v-injuries').value = data.injuries_sustained || '';
-    document.getElementById('v-vehicle-info').value = data.vehicle_info || '';
-    document.getElementById('v-plate').value = data.vehicle_registration_plate || '';
+    document.getElementById('v-plate').value = data.client_vehicle_plate || '';
     document.getElementById('v-description').value = data.accident_description || '';
-    document.getElementById('v-sol-date').value = data.statute_of_limitations_date || '';
+    document.getElementById('v-sol-date').value = data.sol_date || '';
+    
+    // Hidden fields or state needed for execution
+    window.extractedCaseData = data;
 }
 
 // PHASE 2: Send Verified Data to Clio & Gmail
@@ -96,22 +100,17 @@ approveBtn.addEventListener('click', async () => {
     statusText.textContent = "Executing Automation: Updating Clio & Sending Email...";
 
     const payload = {
-        matterId: matterIdInput.value.trim(),
-        clientEmail: clientEmailInput.value.trim(),
-        client_first_name: document.getElementById('v-first-name').value,
-        client_last_name: document.getElementById('v-last-name').value,
-        client_gender: document.getElementById('v-gender').value,
-        opposing_party_name: document.getElementById('v-opposing-party').value,
-        accident_date: document.getElementById('v-accident-date').value,
-        accident_time: document.getElementById('v-accident-time').value,
-        accident_type: document.getElementById('v-accident-type').value,
-        number_injured: document.getElementById('v-number-injured').value,
+        ...window.extractedCaseData,
+        client_name: document.getElementById('v-last-name').value,
+        client_sex: document.getElementById('v-gender').value,
+        defendant_name: document.getElementById('v-opposing-party').value,
+        date_of_accident: document.getElementById('v-accident-date').value,
+        number_of_injured: document.getElementById('v-number-injured').value,
         accident_location: document.getElementById('v-location').value,
-        injuries_sustained: document.getElementById('v-injuries').value,
-        vehicle_info: document.getElementById('v-vehicle-info').value,
-        vehicle_registration_plate: document.getElementById('v-plate').value,
+        client_vehicle_plate: document.getElementById('v-plate').value,
         accident_description: document.getElementById('v-description').value,
-        statute_of_limitations_date: document.getElementById('v-sol-date').value
+        sol_date: document.getElementById('v-sol-date').value,
+        verified_at: new Date().toISOString()
     };
 
     try {

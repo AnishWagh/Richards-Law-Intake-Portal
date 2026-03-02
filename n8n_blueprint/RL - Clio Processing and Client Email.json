@@ -1,0 +1,722 @@
+{
+  "name": "RL - Clio Processing and Client Email",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "b1-trigger",
+      "name": "Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg2",
+              "name": "CLIENT_EMAIL_RECIPIENT",
+              "value": "talent.legal-engineer.hackathon.automation-email@swans.co",
+              "type": "string"
+            },
+            {
+              "id": "cfg3",
+              "name": "TEMPLATE_NO_INJURY",
+              "value": "9130996",
+              "type": "string"
+            },
+            {
+              "id": "cfg4",
+              "name": "TEMPLATE_WITH_INJURY",
+              "value": "9130996",
+              "type": "string"
+            },
+            {
+              "id": "cfg5",
+              "name": "CALENDAR_ID",
+              "value": "358907371",
+              "type": "string"
+            },
+            {
+              "id": "cfg6",
+              "name": "USER_ID",
+              "value": "358907371",
+              "type": "string"
+            },
+            {
+              "id": "cfg7",
+              "name": "CF_DATE_OF_ACCIDENT",
+              "value": "17829796",
+              "type": "string"
+            },
+            {
+              "id": "cfg8",
+              "name": "CF_DEFENDANT_NAME",
+              "value": "17829841",
+              "type": "string"
+            },
+            {
+              "id": "cfg9",
+              "name": "CF_ACCIDENT_LOCATION",
+              "value": "17829811",
+              "type": "string"
+            },
+            {
+              "id": "cfg10",
+              "name": "CF_CLIENT_VEHICLE_PLATE",
+              "value": "17829901",
+              "type": "string"
+            },
+            {
+              "id": "cfg11",
+              "name": "CF_NUMBER_OF_INJURED",
+              "value": "17829916",
+              "type": "string"
+            },
+            {
+              "id": "cfg12",
+              "name": "CF_SOL_DATE",
+              "value": "17829886",
+              "type": "string"
+            },
+            {
+              "id": "cfg13",
+              "name": "CF_ACCIDENT_DESCRIPTION",
+              "value": "17829826",
+              "type": "string"
+            },
+            {
+              "id": "cfg14",
+              "name": "CF_CLIENT_GENDER",
+              "value": "17829871",
+              "type": "string"
+            },
+            {
+              "id": "cfg15",
+              "name": "BOOKING_LINK_INOFFICE",
+              "value": "https://calendly.com/swans-santiago-p/summer-spring",
+              "type": "string"
+            },
+            {
+              "id": "cfg16",
+              "name": "BOOKING_LINK_VIRTUAL",
+              "value": "https://calendly.com/swans-santiago-p/winter-autumn",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b0-config",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.CLIO_API_BASE }}/matters/{{ $json.matter_id }}.json?fields=id,display_number,client%7Bid,name,primary_email_address%7D",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "b2-get-matter",
+      "name": "Get Matter and Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        512,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const matter = $json.data;\nconst config = $('Config').item.json;\nconst triggerData = $('Config').item.json;\n\nreturn {\n  // From Clio API response\n  matter_id: matter.id,\n  contact_id: matter.client.id,\n  client_email: matter.client.primary_email_address,\n  client_clio_name: matter.client.name,\n  display_number: matter.display_number,\n  \n  // Pass through from trigger (via Config which has includeOtherFields)\n  client_name: triggerData.client_name,\n  date_of_accident: triggerData.date_of_accident,\n  defendant_name: triggerData.defendant_name,\n  accident_location: triggerData.accident_location,\n  client_vehicle_plate: triggerData.client_vehicle_plate,\n  number_of_injured: triggerData.number_of_injured,\n  accident_description: triggerData.accident_description,\n  client_sex: triggerData.client_sex,\n  sol_date: triggerData.sol_date,\n  case_id: triggerData.case_id,\n  pronoun_possessive: triggerData.pronoun_possessive,\n  pronoun_subject: triggerData.pronoun_subject,\n  pronoun_object: triggerData.pronoun_object,\n  \n  // Config values\n  CLIO_API_BASE: config.CLIO_API_BASE,\n  CLIENT_EMAIL_RECIPIENT: config.CLIENT_EMAIL_RECIPIENT,\n  TEMPLATE_NO_INJURY: config.TEMPLATE_NO_INJURY,\n  TEMPLATE_WITH_INJURY: config.TEMPLATE_WITH_INJURY,\n  CALENDAR_ID: config.CALENDAR_ID,\n  USER_ID: config.USER_ID,\n  CF_DATE_OF_ACCIDENT: config.CF_DATE_OF_ACCIDENT,\n  CF_DEFENDANT_NAME: config.CF_DEFENDANT_NAME,\n  CF_ACCIDENT_LOCATION: config.CF_ACCIDENT_LOCATION,\n  CF_CLIENT_VEHICLE_PLATE: config.CF_CLIENT_VEHICLE_PLATE,\n  CF_NUMBER_OF_INJURED: config.CF_NUMBER_OF_INJURED,\n  CF_SOL_DATE: config.CF_SOL_DATE,\n  CF_ACCIDENT_DESCRIPTION: config.CF_ACCIDENT_DESCRIPTION,\n  CF_CLIENT_GENDER: config.CF_CLIENT_GENDER,\n  BOOKING_LINK_INOFFICE: config.BOOKING_LINK_INOFFICE,\n  BOOKING_LINK_VIRTUAL: config.BOOKING_LINK_VIRTUAL\n};"
+      },
+      "id": "b3-extract",
+      "name": "Extract Contact Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/matters/{{ $('Extract Contact Data').item.json.matter_id }}.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ (function() { var d = $('Extract Contact Data').item.json; var existing = ($('Get Existing CF Values').item.json.data || {}).custom_field_values || []; var getValId = function(cfId) { for (var i = 0; i < existing.length; i++) { if (existing[i].custom_field && existing[i].custom_field.id === Number(cfId)) return existing[i].id; } return null; }; var make = function(cfId, val) { var e = { custom_field: { id: Number(cfId) }, value: val }; var vid = getValId(cfId); if (vid) e.id = vid; return e; }; return JSON.stringify({ data: { custom_field_values: [ make(d.CF_DATE_OF_ACCIDENT, d.date_of_accident), make(d.CF_DEFENDANT_NAME, d.defendant_name), make(d.CF_ACCIDENT_LOCATION, d.accident_location), make(d.CF_CLIENT_VEHICLE_PLATE, d.client_vehicle_plate || 'N/A'), make(d.CF_NUMBER_OF_INJURED, String(d.number_of_injured)), make(d.CF_SOL_DATE, d.sol_date), make(d.CF_ACCIDENT_DESCRIPTION, d.accident_description), make(d.CF_CLIENT_GENDER, d.client_sex) ] } }); })() }}",
+        "options": {}
+      },
+      "id": "b4-patch-fields",
+      "name": "PATCH Matter Fields",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1088,
+        160
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/document_automations.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"document_template\": { \"id\": {{ parseInt($('Extract Contact Data').item.json.number_of_injured) > 0 ? $('Extract Contact Data').item.json.TEMPLATE_WITH_INJURY : $('Extract Contact Data').item.json.TEMPLATE_NO_INJURY }} },\n    \"matter\": { \"id\": {{ $('Extract Contact Data').item.json.matter_id }} },\n    \"filename\": \"Retainer Agreement - {{ $('Extract Contact Data').item.json.client_name }}.pdf\",\n    \"formats\": [\"pdf\"]\n  }\n}",
+        "options": {}
+      },
+      "id": "b5-doc-auto",
+      "name": "POST Doc Automation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1264,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "id": "b6-wait",
+      "name": "Wait 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        304
+      ],
+      "webhookId": "b497442b-b01b-4f10-9a06-0fdc9f8948c9"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/document_automations/{{ $('POST Doc Automation').item.json.data.id }}.json?fields=id,state,documents{id}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "b7-poll-doc",
+      "name": "Poll Doc Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1760,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.data.state }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b8-doc-ready",
+      "name": "Doc Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2000,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/documents/{{ $json.data.documents[0].id }}/download.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "retainer_pdf"
+            }
+          }
+        }
+      },
+      "id": "b9-download-pdf",
+      "name": "Download Retainer PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2256,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/calendar_entries.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"summary\": \"SOL DEADLINE - {{ $('Extract Contact Data').item.json.client_name }}\",\n    \"description\": \"Statute of Limitations expires for {{ $('Extract Contact Data').item.json.client_name }}. Accident: {{ $('Extract Contact Data').item.json.date_of_accident }} at {{ $('Extract Contact Data').item.json.accident_location }}. DO NOT MISS THIS DEADLINE.\",\n    \"start_at\": \"{{ $('Extract Contact Data').item.json.sol_date }}T09:00:00-05:00\",\n    \"end_at\": \"{{ $('Extract Contact Data').item.json.sol_date }}T09:30:00-05:00\",\n    \"calendar_owner\": { \"id\": {{ $('Extract Contact Data').item.json.CALENDAR_ID }} },\n    \"matter\": { \"id\": {{ $('Extract Contact Data').item.json.matter_id }} },\n    \"all_day\": false\n  }\n}",
+        "options": {}
+      },
+      "id": "b10-calendar",
+      "name": "POST Calendar Entry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2512,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Extract Contact Data').item.json;\nconst month = new Date().getMonth() + 1;\nconst bookingLink = (month >= 3 && month <= 8)\n  ? config.BOOKING_LINK_INOFFICE\n  : config.BOOKING_LINK_VIRTUAL;\nconst bookingType = (month >= 3 && month <= 8) ? 'in-office' : 'virtual';\n\nreturn {\n  json: {\n    booking_link: bookingLink,\n    booking_type: bookingType\n  },\n  binary: $input.item.binary\n};"
+      },
+      "id": "b11-booking",
+      "name": "Booking Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2752,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Extract Contact Data').item.json;\nconst booking = $('Booking Link').item.json;\n\nconst nameParts = data.client_name.split(',');\nconst rawFirst = nameParts.length > 1 ? nameParts[1].trim() : data.client_name;\nconst firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase();\n\nconst accDate = new Date(data.date_of_accident);\nconst dateStr = accDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });\n\nconst subject = 'Richards & Law - Your Case ' + data.case_id + ' - Next Steps';\n\nconst html = '<div style=\"font-family: Georgia, serif; max-width: 600px; margin: 0 auto; color: #333;\">' +\n  '<h2 style=\"color: #1a365d;\">Richards & Law</h2>' +\n  '<p>Dear ' + firstName + ',</p>' +\n  '<p>Thank you for choosing Richards & Law to represent you in connection with the motor vehicle accident that occurred on ' + dateStr + ' at ' + data.accident_location + '.</p>' +\n  '<p>We have prepared a retainer agreement for your review. Please find it attached to this email as a PDF document. We kindly ask that you review the agreement carefully and return a signed copy at your earliest convenience.</p>' +\n  '<p>To discuss your case and next steps, we invite you to schedule a consultation with Attorney Andrew Richards:</p>' +\n  '<p style=\"text-align: center;\"><a href=\"' + booking.booking_link + '\" style=\"display: inline-block; padding: 14px 28px; background-color: #1a365d; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;\">Schedule ' + booking.booking_type + ' consultation</a></p>' +\n  '<p>If you have any questions in the meantime, please do not hesitate to contact our office.</p>' +\n  '<p>Sincerely,<br><strong>Andrew Richards</strong><br>Attorney at Law<br>Richards & Law</p>' +\n  '</div>';\n\n// Fix double .pdf extension on retainer attachment\nconst binary = $input.item.binary;\nif (binary && binary.retainer_pdf) {\n  let fileName = binary.retainer_pdf.fileName || '';\n  if (fileName.endsWith('.pdf.pdf')) {\n    fileName = fileName.replace('.pdf.pdf', '.pdf');\n  }\n  binary.retainer_pdf.fileName = fileName;\n}\n\nreturn {\n  json: {\n    email_subject: subject,\n    email_html: html,\n    client_email: data.CLIENT_EMAIL_RECIPIENT,\n    matter_id: data.matter_id,\n    case_id: data.case_id,\n    client_name: data.client_name,\n    CLIO_API_BASE: data.CLIO_API_BASE\n  },\n  binary: binary\n};"
+      },
+      "id": "b12-build-email",
+      "name": "Build Client Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3008,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.client_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_html }}",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "retainer_pdf"
+              }
+            ]
+          }
+        }
+      },
+      "id": "b13-send-email",
+      "name": "Send Client Email",
+      "disabled": true,
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3264,
+        304
+      ],
+      "webhookId": "b87eb38e-cb9e-46d1-adcd-b361ecb8af46",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GrUBz6wvyTdQlfCz",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/notes.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"data\": {\n    \"type\": \"Matter\",\n    \"matter\": { \"id\": {{ $('Extract Contact Data').item.json.matter_id }} },\n    \"subject\": \"Automated Intake Complete - {{ $('Build Client Email').item.json.case_id }}\",\n    \"detail\": \"Police report processed automatically. Retainer agreement generated and sent to client ({{ $('Build Client Email').item.json.client_name }}). SOL calendar entry created. All custom fields updated.\"\n  }\n}",
+        "options": {}
+      },
+      "id": "b14-clio-note",
+      "name": "Post Clio Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2720,
+        -224
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('node');\nconst execId = $execution.id;\n\n// Reset counter for new executions\nif (staticData.currentExecId !== execId) {\n  staticData.currentExecId = execId;\n  staticData.retryCount = 0;\n}\n\nstaticData.retryCount++;\n\nif (staticData.retryCount > 8) {\n  delete staticData.currentExecId;\n  delete staticData.retryCount;\n  throw new Error('Document automation timed out after 8 retries (120s). Check Clio document_automations status manually.');\n}\n\nreturn $input.item;"
+      },
+      "id": "b8b-retry",
+      "name": "Check Retry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Extract Contact Data').item.json.CLIO_API_BASE }}/matters/{{ $('Extract Contact Data').item.json.matter_id }}.json?fields=custom_field_values{id,custom_field}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "id": "b3b-get-cf",
+      "name": "Get Existing CF Values",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        304
+      ],
+      "credentials": {
+        "oAuth2Api": {
+          "id": "15L2R38U6vAs6Vmg",
+          "name": "Clio"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Workflow Trigger": [
+      {
+        "json": {
+          "client_name": "REYES, GUILLERMO",
+          "date_of_accident": "2018-12-06",
+          "defendant_name": "FRANCOIS, LIONEL",
+          "accident_location": "Flatbush Avenue and Plaza Street East, Kings County, Brooklyn, New York",
+          "client_vehicle_plate": "XCGY85, NJ",
+          "number_of_injured": 0,
+          "accident_description": "On December 6, 2018, Vehicle 1 (Reyes) was traveling northbound on Flatbush Avenue in the right lane when Vehicle 2 (Francois) moved over from the bus lane into the middle lane and struck Vehicle 1. Vehicle 2 then came over again and struck Vehicle 1 a second time in a side-swipe collision in the same direction. No injuries were reported and the police officer did not witness the accident.",
+          "client_sex": "M",
+          "confidence_score": 8,
+          "sol_date": "2026-12-06",
+          "matter_id": "1862236145",
+          "case_id": "RL-1772440159921",
+          "pronoun_possessive": "his",
+          "pronoun_subject": "he",
+          "pronoun_object": "him",
+          "verified": true,
+          "verified_at": "2026-03-02T08:30:04.326Z",
+          "CLIO_API_BASE": "https://app.clio.com/api/v4",
+          "WORKFLOW_B_ID": "3NUwqSxkpFg7RhBP"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Get Matter and Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Matter and Contact": {
+      "main": [
+        [
+          {
+            "node": "Extract Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH Matter Fields": {
+      "main": [
+        [
+          {
+            "node": "POST Doc Automation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Doc Automation": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30s": {
+      "main": [
+        [
+          {
+            "node": "Poll Doc Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Doc Status": {
+      "main": [
+        [
+          {
+            "node": "Doc Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Doc Ready?": {
+      "main": [
+        [
+          {
+            "node": "Download Retainer PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Link": {
+      "main": [
+        [
+          {
+            "node": "Build Client Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Client Email": {
+      "main": [
+        [
+          {
+            "node": "Send Client Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Retry": {
+      "main": [
+        [
+          {
+            "node": "Wait 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Retainer PDF": {
+      "main": [
+        [
+          {
+            "node": "Booking Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Client Email": {
+      "main": [
+        [
+          {
+            "node": "POST Calendar Entry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Calendar Entry": {
+      "main": [
+        [
+          {
+            "node": "Post Clio Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Get Existing CF Values",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing CF Values": {
+      "main": [
+        [
+          {
+            "node": "PATCH Matter Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "3c7a872e-a7e2-4ea7-8fec-a26e771702e4",
+  "meta": {
+    "instanceId": "4d26329c3ccf8ac69216c443f0080579e830a7c8879e44f022f163bd670ee660"
+  },
+  "id": "3NUwqSxkpFg7RhBP",
+  "tags": []
+}

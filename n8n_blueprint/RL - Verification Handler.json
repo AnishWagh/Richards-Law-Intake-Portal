@@ -1,0 +1,90 @@
+{
+  "name": "RL - Verification Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "police-verify",
+        "options": {}
+      },
+      "id": "v1",
+      "name": "Verification Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        304
+      ],
+      "webhookId": "police-verify-webhook-001"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const d = $json.body;\n\n// Compute SOL date (accident + 8 years)\nconst accDate = new Date(d.date_of_accident);\nconst solDate = new Date(accDate);\nsolDate.setFullYear(solDate.getFullYear() + 8);\nconst sol_date = solDate.toISOString().split('T')[0];\n\n// Compute pronouns\nconst sex = (d.client_sex || 'M').trim().toUpperCase();\nconst pronoun_possessive = sex === 'F' ? 'her' : 'his';\nconst pronoun_subject = sex === 'F' ? 'she' : 'he';\nconst pronoun_object = sex === 'F' ? 'her' : 'him';\n\nreturn {\n  client_name: d.client_name,\n  date_of_accident: d.date_of_accident,\n  defendant_name: d.defendant_name,\n  accident_location: d.accident_location,\n  client_vehicle_plate: d.client_vehicle_plate,\n  number_of_injured: Number(d.number_of_injured) || 0,\n  accident_description: d.accident_description,\n  client_sex: d.client_sex,\n  confidence_score: Number(d.confidence_score) || 0,\n  sol_date: sol_date,\n  matter_id: d.matter_id,\n  case_id: d.case_id,\n  pronoun_possessive: pronoun_possessive,\n  pronoun_subject: pronoun_subject,\n  pronoun_object: pronoun_object,\n  verified: true,\n  verified_at: d.verified_at,\n  CLIO_API_BASE: 'https://app.clio.com/api/v4',\n  WORKFLOW_B_ID: '3NUwqSxkpFg7RhBP'\n};"
+      },
+      "id": "v2",
+      "name": "Process Verified Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "3NUwqSxkpFg7RhBP",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "v3",
+      "name": "Execute Workflow B",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        304
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Verification Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Verified Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Verified Data": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow B",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "9a36821e-66a3-4ae6-9343-15413fd80ca3",
+  "meta": {
+    "instanceId": "4d26329c3ccf8ac69216c443f0080579e830a7c8879e44f022f163bd670ee660"
+  },
+  "id": "rGAIGeF8V6eJuVRv",
+  "tags": []
+}
